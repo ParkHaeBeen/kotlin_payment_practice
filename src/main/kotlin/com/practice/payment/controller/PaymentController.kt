@@ -15,7 +15,6 @@ import java.time.LocalDateTime
 class PaymentController(
     private val paymentService: PaymentService
 ) {
-
     @PostMapping("/pay")
     fun pay(
         @Valid @RequestBody payRequest: PayRequest

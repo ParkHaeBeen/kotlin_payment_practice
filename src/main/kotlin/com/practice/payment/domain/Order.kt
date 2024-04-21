@@ -18,8 +18,8 @@ class Order(
 
     val orderAmount: Long,
 
-    var paidAmount: Long,
+    var paidAmount: Long = 0,
 
-    var refundedAmount: Long,
+    var refundedAmount: Long = 0,
 
-) : BaseEntity()
+    ) : BaseEntity()
