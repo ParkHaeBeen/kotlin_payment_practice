@@ -97,7 +97,7 @@ class RefundStatusService(
     private fun getNewOrderStatus(order: Order, totalRefundedAmount: Long): OrderStatus =
         if (order.orderAmount == totalRefundedAmount) REFUNDED
         else PARTIAL_REFUNDED
-    
+
 
     private fun getTotalRefundedAmount(order: Order): Long {
         return orderTransactionRepository.findByOrderAndTransactionType(order, REFUND)
@@ -105,18 +105,15 @@ class RefundStatusService(
             .sumOf { it.transactionAmount }
     }
 
-    fun saveAsFailure(orderId: Long, errorCode: ErrorCode) {
-        val order = getOrderByOrderId(orderId)
+    fun saveAsFailure(refundTxId: Long, errorCode: ErrorCode) {
+        orderTransactionRepository
+            .findById(refundTxId)
+            .orElseThrow { throw PaymentException(INTERNAL_SERVER_ERROR) }
             .apply {
-                orderStatus = OrderStatus.FAILED
+                transactionStatus = FAILURE
+                failureCode = errorCode.name
+                description = errorCode.errorMessage
             }
-
-        val orderTransaction = getOrderTransactionByOrder(order).apply {
-            transactionStatus = FAILURE
-            failureCode = errorCode.name
-            description = errorCode.errorMessage
-        }
-
     }
 
     private fun getOrderTransactionByOrder(order: Order) =

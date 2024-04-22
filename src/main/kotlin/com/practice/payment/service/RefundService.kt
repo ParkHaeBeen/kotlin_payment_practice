@@ -40,7 +40,7 @@ class RefundService(
             )
         } catch (e: Exception) {
             //실패: 거래를 실패로 저장
-            paymentStatusService.saveAsFailure(orderId, getErrorCode(e))
+            refundStatusService.saveAsFailure(refundTxId, getErrorCode(e))
             throw e
         }
     }
