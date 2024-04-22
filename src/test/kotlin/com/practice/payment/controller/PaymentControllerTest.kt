@@ -2,7 +2,9 @@ package com.practice.payment.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
+import com.practice.payment.service.PayServiceResponse
 import com.practice.payment.service.PaymentService
+import io.mockk.every
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import java.time.LocalDateTime
 
 @WebMvcTest(PaymentController::class)
 internal class PaymentControllerTest @Autowired constructor(
@@ -24,7 +27,15 @@ internal class PaymentControllerTest @Autowired constructor(
     @Test
     fun `결제 요청 - 성공 응답`() {
         //given
+        every {
+            paymentService.pay(any())
+        } returns PayServiceResponse(
+            payUserId = "p1",
+            amount = 1000,
+            transactionId = "ts",
+            transactedAt = LocalDateTime.now()
 
+        )
         //when
 
         //then
