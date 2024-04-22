@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 
 @EnableFeignClients
 @EnableJpaAuditing
+class PaymentApplicationConfiguration
+
 @SpringBootApplication
 class KotlinPaymentApplication
 
