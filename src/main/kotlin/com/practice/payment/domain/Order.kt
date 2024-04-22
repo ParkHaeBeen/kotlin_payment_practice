@@ -12,7 +12,7 @@ class Order(
     val paymentUser: PaymentUser,
 
     @Enumerated(EnumType.STRING)
-    val orderStatus: OrderStatus,
+    var orderStatus: OrderStatus,
 
     val orderTitle: String,
 

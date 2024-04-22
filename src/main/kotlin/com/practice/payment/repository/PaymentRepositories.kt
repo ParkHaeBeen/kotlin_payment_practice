@@ -1,5 +1,6 @@
 package com.practice.payment.repository
 
+import com.practice.payment.TransactionType
 import com.practice.payment.domain.Order
 import com.practice.payment.domain.OrderTransaction
 import com.practice.payment.domain.PaymentUser
@@ -16,4 +17,8 @@ interface OrderRepository : JpaRepository<Order, Long> {
 
 interface OrderTransactionRepository : JpaRepository<OrderTransaction, Long> {
 
+    fun findByOrderAndTransactionType(
+        order: Order,
+        transactionType: TransactionType
+    ): List<OrderTransaction>
 }
