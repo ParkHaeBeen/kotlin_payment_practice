@@ -24,19 +24,19 @@ class RefundService(
 
         return try {
             //계좡에 금액 사용 취소 요청
-            val payMethodTransactionId = accountService.useAccount(orderId)
+            val refundAccountTransactionId = accountService.cancelUseAccount(refundTxId)
 
             //성공: 거래 성공으로 저장
-            val (transactionId, transactedAt) = paymentStatusService.saveAsSuccess(
-                orderId,
-                payMethodTransactionId
+            val (transactionId, transactedAt) = refundStatusService.saveAsSuccess(
+                refundTxId,
+                refundAccountTransactionId
             )
 
-            PayServiceResponse(
-                payUserId = payServiceRequest.payUserId,
-                amount = payServiceRequest.amount,
-                transactionId = transactionId,
-                transactedAt = transactedAt
+            RefundServiceResponse(
+                refundTransactionId = transactionId,
+                refundAmount = refundServiceRequest.refundAmount,
+                refundedAt = transactedAt
+
             )
         } catch (e: Exception) {
             //실패: 거래를 실패로 저장

@@ -1,8 +1,7 @@
 package com.practice.payment.service
 
 import com.practice.payment.OrderStatus
-import com.practice.payment.OrderStatus.PAID
-import com.practice.payment.OrderStatus.PARTIAL_REFUNDED
+import com.practice.payment.OrderStatus.*
 import com.practice.payment.TransactionStatus.*
 import com.practice.payment.TransactionType.PAYMENT
 import com.practice.payment.TransactionType.REFUND
@@ -69,23 +68,41 @@ class RefundStatusService(
     }
 
     @Transactional
-    fun saveAsSuccess(orderId: Long, payMethodTransactionId: String): Pair<String, LocalDateTime> {
-        val order = getOrderByOrderId(orderId)
+    fun saveAsSuccess(
+        refundTxId: Long,
+        refundMethodTransactionId: String
+    ): Pair<String, LocalDateTime> {
+        val orderTransaction = orderTransactionRepository.findById(refundTxId)
+            .orElseThrow { throw PaymentException(INTERNAL_SERVER_ERROR) }
             .apply {
-                orderStatus = PAID
-                paidAmount = orderAmount
+                transactionStatus = SUCCESS
+                this.payMethodTransactionId = refundMethodTransactionId
+                transactedAt = LocalDateTime.now()
             }
 
-        val orderTransaction = getOrderTransactionByOrder(order).apply {
-            transactionStatus = SUCCESS
-            this.payMethodTransactionId = payMethodTransactionId
-            transactedAt = LocalDateTime.now()
+        val order = orderTransaction.order
+        val totalRefundedAmount = getTotalRefundedAmount(order)
+
+        order.apply {
+            orderStatus = getNewOrderStatus(order, totalRefundedAmount)
+            refundedAmount = totalRefundedAmount
         }
 
         return Pair(
             orderTransaction.transactionId,
             orderTransaction.transactedAt ?: throw PaymentException(INTERNAL_SERVER_ERROR)
         )
+    }
+
+    private fun getNewOrderStatus(order: Order, totalRefundedAmount: Long): OrderStatus =
+        if (order.orderAmount == totalRefundedAmount) REFUNDED
+        else PARTIAL_REFUNDED
+    
+
+    private fun getTotalRefundedAmount(order: Order): Long {
+        return orderTransactionRepository.findByOrderAndTransactionType(order, REFUND)
+            .filter { it.transactionStatus == SUCCESS }
+            .sumOf { it.transactionAmount }
     }
 
     fun saveAsFailure(orderId: Long, errorCode: ErrorCode) {
