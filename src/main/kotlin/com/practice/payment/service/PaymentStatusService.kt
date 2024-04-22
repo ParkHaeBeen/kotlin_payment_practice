@@ -1,8 +1,7 @@
 package com.practice.payment.service
 
 import com.practice.payment.OrderStatus
-import com.practice.payment.TransactionStatus.RESERVE
-import com.practice.payment.TransactionStatus.SUCCESS
+import com.practice.payment.TransactionStatus.*
 import com.practice.payment.TransactionType.PAYMENT
 import com.practice.payment.domain.Order
 import com.practice.payment.domain.OrderTransaction
@@ -67,17 +66,13 @@ class PaymentStatusService(
 
     @Transactional
     fun saveAsSuccess(orderId: Long, payMethodTransactionId: String): Pair<String, LocalDateTime> {
-        val order = orderRepository.findById(orderId)
-            .orElseThrow { throw PaymentException(ErrorCode.ORDER_NOT_FOUND) }
+        val order = getOrderByOrderId(orderId)
             .apply {
                 orderStatus = OrderStatus.PAID
                 paidAmount = orderAmount
             }
 
-        val orderTransaction = orderTransactionRepository.findByOrderAndTransactionType(
-            order = order,
-            transactionType = PAYMENT
-        ).first().apply {
+        val orderTransaction = getOrderTransactionByOrder(order).apply {
             transactionStatus = SUCCESS
             this.payMethodTransactionId = payMethodTransactionId
             transactedAt = LocalDateTime.now()
@@ -88,4 +83,28 @@ class PaymentStatusService(
             orderTransaction.transactedAt ?: throw PaymentException(INTERNAL_SERVER_ERROR)
         )
     }
+
+    fun saveAsFailure(orderId: Long, errorCode: ErrorCode) {
+        val order = getOrderByOrderId(orderId)
+            .apply {
+                orderStatus = OrderStatus.FAILED
+            }
+
+        val orderTransaction = getOrderTransactionByOrder(order).apply {
+            transactionStatus = FAILURE
+            failureCode = errorCode.name
+            description = errorCode.errorMessage
+        }
+
+    }
+
+    private fun getOrderTransactionByOrder(order: Order) =
+        orderTransactionRepository.findByOrderAndTransactionType(
+            order = order,
+            transactionType = PAYMENT
+        ).first()
+
+    private fun getOrderByOrderId(orderId: Long): Order =
+        orderRepository.findById(orderId)
+            .orElseThrow { throw PaymentException(ErrorCode.ORDER_NOT_FOUND) }
 }
